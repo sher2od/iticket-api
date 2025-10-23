@@ -1,43 +1,68 @@
-# app/routers/auth.py
-from fastapi import APIRouter, Depends, HTTPException
+from typing import Annotated
+from fastapi import APIRouter, Depends, status, HTTPException
 from sqlalchemy.orm import Session
-from app.schemas.user import UserRegister, UserVerify, UserLogin, UserResponse, Token
-from app.services.user_service import create_user, verify_user, authenticate_user, _send_verification_email
+from fastapi.security import OAuth2PasswordRequestForm
+
+from app.schemas.user import UserCreate, UserResponse, VerificationCode, UserLogin
+from app.services.user_service import create_user
+from app.utils.email import send_verification_code_to_email
+from app.utils.password import verify_password  # ✅ nomi to‘g‘rildi
+from app.db.models import User
+from app.core.security import generate_token,get_current_user
 from app.dependencies import get_db
-from app.core.security import create_access_token
 
-router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.post("/register", response_model=UserResponse)
-async def register(user_data: UserRegister, db: Session = Depends(get_db)):
-    """
-    Register: yaratadi -> db ga saqlaydi -> verification code yuboradi emailga.
-    """
-    new_user, code = create_user(db, user_data)  # sync create user
-    # yuborish (async)
-    try:
-        await _send_verification_email(new_user.email, new_user.username, code)
-    except Exception as e:
-        # email yuborishda muammo bo'lsa ham user bazada saqlanadi; qayta yuborish mumkin
-        # log qilinsa yaxshi, lekin hozir HTTPException yuboramiz
-        raise HTTPException(status_code=500, detail=f"Failed to send verification email: {e}")
-    return new_user
+router = APIRouter(
+    prefix="/user",
+    tags=["User"]
+)
 
-@router.post("/verify")
-def verify(data: UserVerify, db: Session = Depends(get_db)):
-    """
-    Tasdiqlash: email + 4 xonali kod
-    """
-    user = verify_user(db, data.email, data.code)
-    return {"detail": "Email verified", "user_id": user.id}
+# ✅ 1. Register
+@router.post("/register")
+async def register_user(user: UserCreate, db: Session = Depends(get_db)):
+    user_db = create_user(db, user)  # <-- bu bazaga yozilgan haqiqiy User modeli
+    await send_verification_code_to_email(
+        user_db.email,
+        user_db.username, 
+        user_db.verification_code
+        )
+    return UserResponse.from_orm(user_db)
 
-@router.post("/login", response_model=Token)
-def login(data: UserLogin, db: Session = Depends(get_db)):
-    """
-    Login: email + password(8-char) -> agar verified bo'lsa token qaytaradi
-    """
-    user = authenticate_user(db, data.email, data.password)
+
+# ✅ 2. Verify
+@router.post("/verify", response_model=UserResponse)
+async def verify_user_code(verification_data: VerificationCode, db: Session = Depends(get_db)):
+    user = db.query(User).filter_by(email=verification_data.email).first()
+
     if not user:
-        raise HTTPException(status_code=401, detail="Invalid credentials")
-    token = create_access_token({"sub": str(user.id), "email": user.email})
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    if int(user.verification_code) != int(verification_data.code):
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid verification code")
+
+    
+    user.is_verified = True
+    db.commit()
+
+    return user
+
+
+
+# ✅ 3. Login
+@router.post("/login")
+async def login_user(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    user = db.query(User).filter(User.email == form_data.username, User.is_verified == True).first()
+
+    if not user:
+        raise HTTPException(status_code=400, detail="User not found or not verified")
+
+    if not verify_password(form_data.password, user.password):
+        raise HTTPException(status_code=401, detail="Incorrect password")
+
+    token = generate_token(user)
     return {"access_token": token, "token_type": "bearer"}
+
+
+@router.get("/me")
+async def get_me(current_user: User = Depends(get_current_user)):
+    return current_user

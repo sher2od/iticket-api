@@ -1,34 +1,44 @@
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
+from typing import Annotated,Optional
 from datetime import datetime
-from app.db.models import UserRoles
+from enum import Enum
 
-class UserRegister(BaseModel):
-    username: str = Field(..., min_length=3, max_length=100)
-    email: EmailStr
-    phone: Optional[str] = Field(None, max_length=20)
-    password: str = Field(..., min_length=8, max_length=72)  # bcrypt limit
-    age: Optional[int] = Field(None, ge=0)
+from pydantic import BaseModel,Field,EmailStr
 
-class UserVerify(BaseModel):
-    email: EmailStr
-    code: str = Field(..., min_length=4, max_length=4)
+
+class UserRoles(str, Enum):
+    ADMIN = "admin"
+    USER = "user"
+
+
+class UserCreate(BaseModel):
+    username:str
+    email: Annotated[str,EmailStr]
+    phone:Annotated[str,Field(min_length=9,max_length=15)]
+    password:Annotated[str,Field(min_length=8)]
+    age:int
+    
+
+class VerificationCode(BaseModel):
+    email: Annotated[str, EmailStr]
+    code: Annotated[int, Field(ge=0, le=9999, example=0)]
+
 
 class UserLogin(BaseModel):
-    email: EmailStr
-    password: str = Field(..., min_length=8)
+    email:Annotated[str,EmailStr]
+    password:Annotated[str,Field(min_length=8)]
+
+
 
 class UserResponse(BaseModel):
-    id: int
-    username: str
-    email: EmailStr
-    role: UserRoles
-    is_verified: bool
-    created_at: datetime
+    id:int
+    username:str
+    phone:Annotated[str,Field(min_length=9,max_length=15)]
+    age:int
+    role:Annotated[str,UserRoles]
+    is_verified:bool
+    created_at: Optional[datetime] = None
 
     class Config:
         from_attributes = True
 
-class Token(BaseModel):
-    access_token: str
-    token_type: str = "bearer"
+

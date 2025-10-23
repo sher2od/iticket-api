@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from enum import Enum
 from sqlalchemy import (
     Column, Integer, String, Text, DECIMAL, ForeignKey,
@@ -25,6 +23,7 @@ class OrderStatus(str, Enum):
 
 class User(Base):
     __tablename__ = "users"
+
     id = Column(Integer, primary_key=True, index=True)
     username = Column(String(100), unique=True, nullable=False)
     email = Column(String(150), unique=True, nullable=False)
@@ -32,20 +31,13 @@ class User(Base):
     password = Column(String(255), nullable=False)
     age = Column(Integer, CheckConstraint("age >= 0"))
     role = Column(SqlEnum(UserRoles), default=UserRoles.USER, nullable=False)
-    is_verified = Column(Boolean, default=False, nullable=False)
-
-    # Verification code (4-digit) and expiry
-    verification_code = Column(String(10), nullable=True)
-    code_expires = Column(DateTime(timezone=True), nullable=True)
-
+    is_verified = Column(Boolean,default=False,nullable=False)
+    verification_code = Column(String, nullable=True)
+    code_expires = Column(DateTime, nullable=True)
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
-    updated_at = Column(
-        TIMESTAMP(timezone=True),
-        default=datetime.utcnow,
-        onupdate=datetime.utcnow
-    )
 
     orders = relationship("Order", back_populates="user", cascade="all, delete")
+
 
 class Venue(Base):
     __tablename__ = "venues"
