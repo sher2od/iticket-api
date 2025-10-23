@@ -1,7 +1,7 @@
 from enum import Enum
 from sqlalchemy import (
     Column, Integer, String, Text, DECIMAL, ForeignKey,
-    TIMESTAMP, CheckConstraint, func, Enum as SqlEnum
+    TIMESTAMP, CheckConstraint, func, Enum as SqlEnum,Boolean
 )
 from sqlalchemy.orm import relationship
 
@@ -31,6 +31,7 @@ class User(Base):
     password = Column(String(255), nullable=False)
     age = Column(Integer, CheckConstraint("age >= 0"))
     role = Column(SqlEnum(UserRoles), default=UserRoles.USER, nullable=False)
+    is_verified = Column(Boolean, default=False, nullable=False) 
     created_at = Column(TIMESTAMP(timezone=True), server_default=func.now())
 
     orders = relationship("Order", back_populates="user", cascade="all, delete")
