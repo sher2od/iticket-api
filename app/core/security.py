@@ -1,24 +1,3 @@
-# import jwt
-# from datetime import timedelta,datetime
-
-# from app.db.models import User
-# from app.core.config import config
-
-# SECRET_KEY = config.SECRET_KEY
-# JWT_ALGORITHM = config.JWT_ALGORITHM
-
-# def generate_token(user:User) -> str:
-#     payload = {
-#         'sub':str(user.id),
-#         'role':str(user.role),
-#         'exp':datetime.utcnow() + timedelta(minutes=15)
-#     }
-#     token = jwt.encode(payload=payload,key=SECRET_KEY,algorithm=JWT_ALGORITHM)
-
-#     return token
-
-
-
 import jwt
 from datetime import timedelta, datetime
 from fastapi import Depends, HTTPException, status
@@ -32,7 +11,7 @@ from app.core.config import config
 SECRET_KEY = config.SECRET_KEY
 JWT_ALGORITHM = config.JWT_ALGORITHM
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")  # ✅ "/users/login"
 
 def generate_token(user: User) -> str:
     payload = {
@@ -67,4 +46,3 @@ def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(
         raise credentials_exception
 
     return user
-
