@@ -54,3 +54,6 @@ class VenueService:
         db.delete(venue)
         db.commit()
         return {"message":"Venue deleted seccessfully"}
+
+
+        

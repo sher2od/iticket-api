@@ -57,4 +57,4 @@ def delete_venue(
 ):
     if current_user.role != UserRoles.ADMIN:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not allowed")
-    return venue_service.delete_venue(db, venue_id)
+    return venue_service.delete_venue(db, venue_id) 
