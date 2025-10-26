@@ -5,7 +5,7 @@ from pydantic import Field,BaseModel
 
 class EventBase(BaseModel):
     name: str
-    description: int = Field(ge=0)
+    description: str 
     venue_id: int
     limit_age: int
     start_time: datetime
