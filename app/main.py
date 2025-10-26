@@ -5,6 +5,7 @@ from app.db.init_db import create_tables
 
 from app.routers.users import router as users_router
 from app.routers.venues import router as venues_router
+from app.routers.events import router as events_routers
 
 create_tables()
 
@@ -22,3 +23,4 @@ app.add_middleware(
 
 app.include_router(users_router)
 app.include_router(venues_router)
+app.include_router(events_routers)
