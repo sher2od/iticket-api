@@ -32,3 +32,43 @@ def get_tickets(
 ):
     return ticket_service.get_tickets(db)
     
+
+
+# TODO Update ADMIN -----------------
+@router.put("/{ticket_id}",response_model=schemas.TicketResponse)
+def update_ticket(
+    ticket_id: int,
+    ticket_data: schemas.TicketUpdate,
+    current_user = Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role != UserRoles.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Not allowed. Only admin can update tickets."
+            )
+    
+    updated_ticket = ticket_service.update_ticket(ticket_id,ticket_data,db)
+    if not updated_ticket:
+            raise HTTPException(status_code=404, detail="Ticket not found")
+    return updated_ticket
+
+
+
+
+@router.delete("/{ticket_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_ticket(
+    ticket_id: int,
+    current_user=Depends(get_current_user),
+    db: Session = Depends(get_db)
+):
+    if current_user.role != UserRoles.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Not allowed. Only admin can delete tickets."
+        )
+
+    success = ticket_service.delete_ticket(ticket_id, db)
+    if not success:
+        raise HTTPException(status_code=404, detail="Ticket not found")
+    return
