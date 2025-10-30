@@ -4,7 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.schemas import event as schemas
 from app.services.event_service import EventService
-from app.dependencies import get_db
+from app.dependencies import get_db,get_admin
 from app.core.security import get_current_user
 from app.db.models import UserRoles
 
@@ -16,12 +16,9 @@ event_service = EventService()
 @router.post('/',response_model=schemas.EventResponse)
 def create_event(
     event_deta: schemas.EventCreate,
-    current_user = Depends(get_current_user),
+    admin = Depends(get_admin),
     db: Session = Depends(get_db)
 ):
-    if current_user.role != UserRoles.ADMIN:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail="not allowed")
-    
     return event_service.create_event(event_deta,db)
 
 # TODO Get All
@@ -51,7 +48,7 @@ def update_event(
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="not allowed")
     
     return event_service.update_event(db, event_id, event_data)
-    
+
 
 # TODO DELETE faqat ADMIN
 @router.delete('/{event_id}')

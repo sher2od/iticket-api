@@ -5,13 +5,13 @@ from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 
 from app.db.models import User
-from app.dependencies import get_db
 from app.core.config import config
 
 SECRET_KEY = config.SECRET_KEY
 JWT_ALGORITHM = config.JWT_ALGORITHM
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")  # ✅ "/users/login"
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
+
 
 def generate_token(user: User) -> str:
     payload = {
@@ -19,11 +19,19 @@ def generate_token(user: User) -> str:
         "role": str(user.role),
         "exp": datetime.utcnow() + timedelta(minutes=15)
     }
-    token = jwt.encode(payload=payload, key=SECRET_KEY, algorithm=JWT_ALGORITHM)
+    token = jwt.encode(payload, SECRET_KEY, algorithm=JWT_ALGORITHM)
     return token
 
 
-def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
+def get_current_user(token: str = Depends(oauth2_scheme)):
+    """
+    Token orqali foydalanuvchini aniqlaydi.
+    Aylana importni oldini olish uchun get_db importi ichkarida joylashgan.
+    """
+    # ❗️Aylana importni oldini olish uchun bu yerda import qilamiz
+    from app.dependencies import get_db
+    db: Session = next(get_db())
+
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Invalid or expired token",
