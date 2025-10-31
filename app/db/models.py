@@ -60,6 +60,7 @@ class Event(Base):
     venue_id = Column(Integer, ForeignKey("venues.id", ondelete="CASCADE"))
     start_time = Column(TIMESTAMP(timezone=True), nullable=False)
     end_time = Column(TIMESTAMP(timezone=True))
+    banner = Column(String)
 
     venue = relationship("Venue", back_populates="events")
     tickets = relationship("Ticket", back_populates="event", cascade="all, delete")

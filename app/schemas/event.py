@@ -34,6 +34,7 @@ class EventCreate(EventBase):
 
 class EventResponse(EventBase):
     id: int
+    banner: Optional[str] = None
 
     class Config:
         from_attributes = True

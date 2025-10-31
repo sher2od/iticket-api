@@ -8,6 +8,7 @@ from app.routers.venues import router as venues_router
 from app.routers.events import router as events_routers
 from app.routers.tickets import router as tickts_routers
 from app.routers.orders import router as order_routers
+from app.routers.dashboard_api import router as dashboard_router
 
 create_tables()
 
@@ -28,3 +29,4 @@ app.include_router(venues_router)
 app.include_router(events_routers)
 app.include_router(tickts_routers)
 app.include_router(order_routers)
+app.include_router(dashboard_router)
